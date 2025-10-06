@@ -1,7 +1,6 @@
 package com.reactioncommerce.tags.controller;
 
-import com.reactioncommerce.tags.model.Metafield;
-import com.reactioncommerce.tags.model.Tag;
+import com.reactioncommerce.tags.model.*;
 import com.reactioncommerce.tags.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -32,7 +31,7 @@ public class TagController {
     }
     
     @QueryMapping
-    public Mono<Map<String, Object>> tags(
+    public Mono<TagConnection> tags(
         @Argument String shopId,
         @Argument Boolean isTopLevel,
         @Argument Boolean shouldIncludeDeleted,
@@ -50,33 +49,33 @@ public class TagController {
         );
         
         return tagFlux.collectList()
-            .map(tags -> Map.of(
-                "nodes", tags,
-                "totalCount", tags.size(),
-                "pageInfo", Map.of(
-                    "hasNextPage", false,
-                    "hasPreviousPage", false,
-                    "startCursor", null,
-                    "endCursor", null
-                )
-            ));
+            .map(tags -> TagConnection.builder()
+                .nodes(tags)
+                .totalCount(tags.size())
+                .pageInfo(PageInfo.builder()
+                    .hasNextPage(false)
+                    .hasPreviousPage(false)
+                    .startCursor(null)
+                    .endCursor(null)
+                    .build())
+                .build());
     }
     
     @QueryMapping
-    public Mono<Map<String, Object>> productsByTagId(
+    public Mono<TagConnection> productsByTagId(
         @Argument String shopId,
         @Argument String tagId
     ) {
-        return Mono.just(Map.of(
-            "nodes", Collections.emptyList(),
-            "totalCount", 0,
-            "pageInfo", Map.of(
-                "hasNextPage", false,
-                "hasPreviousPage", false,
-                "startCursor", null,
-                "endCursor", null
-            )
-        ));
+        return Mono.just(TagConnection.builder()
+            .nodes(Collections.emptyList())
+            .totalCount(0)
+            .pageInfo(PageInfo.builder()
+                .hasNextPage(false)
+                .hasPreviousPage(false)
+                .startCursor(null)
+                .endCursor(null)
+                .build())
+            .build());
     }
     
     @MutationMapping

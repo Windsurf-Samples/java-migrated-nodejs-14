@@ -28,9 +28,15 @@ public class TagService {
             tag.setSlug(SlugUtils.generateSlug(tag.getSlug()));
         }
         
-        return tagRepository.save(tag)
-            .onErrorMap(DuplicateKeyException.class, 
-                e -> new DuplicateSlugException(tag.getSlug()));
+        return tagRepository.existsBySlugAndShopId(tag.getSlug(), tag.getShopId())
+            .flatMap(exists -> {
+                if (exists) {
+                    return Mono.error(new DuplicateSlugException(tag.getSlug()));
+                }
+                return tagRepository.save(tag)
+                    .onErrorMap(DuplicateKeyException.class, 
+                        e -> new DuplicateSlugException(tag.getSlug()));
+            });
     }
     
     public Mono<Tag> updateTag(String tagId, String shopId, Tag updates) {
@@ -43,17 +49,27 @@ public class TagService {
                     updates.setSlug(SlugUtils.generateSlug(updates.getSlug()));
                 }
                 
-                existingTag.setName(updates.getName());
-                existingTag.setSlug(updates.getSlug());
-                existingTag.setDisplayTitle(updates.getDisplayTitle());
-                existingTag.setHeroMediaUrl(updates.getHeroMediaUrl());
-                existingTag.setIsVisible(updates.getIsVisible());
-                existingTag.setMetafields(updates.getMetafields());
-                existingTag.setFeaturedProductIds(updates.getFeaturedProductIds());
-                
-                return tagRepository.save(existingTag)
-                    .onErrorMap(DuplicateKeyException.class,
-                        e -> new DuplicateSlugException(updates.getSlug()));
+                return tagRepository.findBySlugAndShopId(updates.getSlug(), shopId)
+                    .flatMap(conflictingTag -> {
+                        if (!conflictingTag.getId().equals(tagId)) {
+                            return Mono.error(new DuplicateSlugException(updates.getSlug()));
+                        }
+                        return Mono.just(existingTag);
+                    })
+                    .switchIfEmpty(Mono.just(existingTag))
+                    .flatMap(tag -> {
+                        tag.setName(updates.getName());
+                        tag.setSlug(updates.getSlug());
+                        tag.setDisplayTitle(updates.getDisplayTitle());
+                        tag.setHeroMediaUrl(updates.getHeroMediaUrl());
+                        tag.setIsVisible(updates.getIsVisible());
+                        tag.setMetafields(updates.getMetafields());
+                        tag.setFeaturedProductIds(updates.getFeaturedProductIds());
+                        
+                        return tagRepository.save(tag)
+                            .onErrorMap(DuplicateKeyException.class,
+                                e -> new DuplicateSlugException(updates.getSlug()));
+                    });
             });
     }
     
