@@ -87,6 +87,7 @@ Desktop.ini
 .env.development
 .env.test
 .env.production
+.envrc
 
 # Application logs
 logs/
