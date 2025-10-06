@@ -1,0 +1,63 @@
+# Docker Compose configuration for Reaction Commerce Java API
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+      - MONGO_URL=mongodb://mongo:27017/reaction
+      - ADMIN_PASSWORD=admin123
+    depends_on:
+      - mongo
+    networks:
+      - reaction-network
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=reaction
+    volumes:
+      - mongo-data:/data/db
+      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - reaction-network
+    restart: unless-stopped
+    command: mongod --replSet rs0 --bind_ip_all
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-setup:
+    image: mongo:7.0
+    depends_on:
+      - mongo
+    networks:
+      - reaction-network
+    restart: "no"
+    entrypoint: >
+      bash -c "
+        sleep 10 &&
+        mongosh --host mongo:27017 --eval '
+          rs.initiate({
+            _id: \"rs0\",
+            members: [
+              { _id: 0, host: \"mongo:27017\" }
+            ]
+          })
+        '
+      "
+
+volumes:
+  mongo-data:
+
+networks:
+  reaction-network:
+    driver: bridge

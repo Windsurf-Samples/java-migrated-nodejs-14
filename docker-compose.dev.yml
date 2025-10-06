@@ -1,0 +1,45 @@
+# Development Docker Compose configuration
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=reaction
+    volumes:
+      - mongo-dev-data:/data/db
+    networks:
+      - reaction-dev-network
+    restart: unless-stopped
+    command: mongod --replSet rs0 --bind_ip_all
+
+  mongo-setup:
+    image: mongo:7.0
+    depends_on:
+      - mongo
+    networks:
+      - reaction-dev-network
+    restart: "no"
+    entrypoint: >
+      bash -c "
+        sleep 10 &&
+        mongosh --host mongo:27017 --eval '
+          rs.initiate({
+            _id: \"rs0\",
+            members: [
+              { _id: 0, host: \"mongo:27017\" }
+            ]
+          })
+        '
+      "
+
+volumes:
+  mongo-dev-data:
+
+networks:
+  reaction-dev-network:
+    driver: bridge

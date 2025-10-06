@@ -1,0 +1,85 @@
+# Reaction Commerce GraphQL Schema
+# This is the main schema file that will be expanded during development
+
+# Basic scalar types
+scalar DateTime
+scalar JSON
+
+# Root Query type
+type Query {
+    # System information
+    ping: String!
+    systemInformation: SystemInformation
+    
+    # Shop queries (to be expanded)
+    primaryShop: Shop
+    shop(id: ID!): Shop
+    
+    # Product queries (to be expanded)  
+    products(
+        shopIds: [ID!]!
+        first: Int
+        offset: Int
+        sortOrder: SortOrder = desc
+    ): ProductConnection
+}
+
+# Root Mutation type
+type Mutation {
+    # Placeholder mutations (to be expanded)
+    echo(message: String!): String!
+}
+
+# Root Subscription type
+type Subscription {
+    # Placeholder subscriptions (to be expanded)
+    ping: String!
+}
+
+# Basic types
+type SystemInformation {
+    version: String!
+    uptime: String!
+    environment: String!
+}
+
+type Shop {
+    _id: ID!
+    name: String!
+    description: String
+    currency: String!
+    language: String!
+    timezone: String
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Product {
+    _id: ID!
+    title: String!
+    description: String
+    shopId: ID!
+    isVisible: Boolean!
+    isDeleted: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type ProductConnection {
+    nodes: [Product!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+# Enums
+enum SortOrder {
+    asc
+    desc
+}

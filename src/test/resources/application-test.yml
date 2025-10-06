@@ -1,0 +1,14 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/reaction-test
+  
+  graphql:
+    graphiql:
+      enabled: false
+
+logging:
+  level:
+    com.reactioncommerce: INFO
+    org.springframework: WARN
+    org.mongodb: WARN
