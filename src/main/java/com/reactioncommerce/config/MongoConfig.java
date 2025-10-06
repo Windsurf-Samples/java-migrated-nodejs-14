@@ -13,4 +13,9 @@ public class MongoConfig extends AbstractReactiveMongoConfiguration {
     protected String getDatabaseName() {
         return "reaction";
     }
+    
+    @Override
+    protected boolean autoIndexCreation() {
+        return true;
+    }
 }

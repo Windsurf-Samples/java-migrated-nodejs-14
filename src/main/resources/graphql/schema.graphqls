@@ -22,12 +22,48 @@ type Query {
         offset: Int
         sortOrder: SortOrder = desc
     ): ProductConnection
+    
+    # Tag queries
+    tag(
+        slugOrId: String!
+        shopId: ID!
+        shouldIncludeInvisible: Boolean = false
+    ): Tag
+    
+    tags(
+        shopId: ID!
+        filter: String
+        excludedTagIds: [ID]
+        isTopLevel: Boolean
+        shouldIncludeDeleted: Boolean = false
+        shouldIncludeInvisible: Boolean = false
+        after: String
+        before: String
+        first: Int
+        last: Int
+        sortOrder: SortOrder = asc
+        sortBy: TagSortByField = position
+    ): TagConnection
+    
+    # Stub for productsByTagId (Products plugin not yet migrated)
+    productsByTagId(
+        shopId: ID!
+        tagId: ID!
+        after: String
+        before: String
+        first: Int
+        last: Int
+    ): ProductConnection
 }
 
 # Root Mutation type
 type Mutation {
     # Placeholder mutations (to be expanded)
     echo(message: String!): String!
+    
+    # Tag mutations
+    addTag(input: AddTagInput!): AddTagPayload!
+    updateTag(input: UpdateTagInput!): UpdateTagPayload!
 }
 
 # Root Subscription type
@@ -78,8 +114,102 @@ type PageInfo {
     endCursor: String
 }
 
+# Tag Types
+type Tag {
+    _id: ID!
+    name: String!
+    slug: String
+    displayTitle: String
+    heroMediaUrl: String
+    isVisible: Boolean!
+    isDeleted: Boolean!
+    isTopLevel: Boolean!
+    position: Int
+    shopId: ID!
+    metafields: [Metafield]
+    featuredProductIds: [ID]
+    subTagIds: [ID]
+    relatedTagIds: [ID]
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Metafield {
+    key: String
+    namespace: String
+    scope: String
+    value: String
+    valueType: String
+    description: String
+}
+
+input MetafieldInput {
+    key: String!
+    namespace: String
+    scope: String
+    value: String!
+    valueType: String
+    description: String
+}
+
+type TagConnection {
+    edges: [TagEdge]
+    nodes: [Tag]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type TagEdge {
+    cursor: String!
+    node: Tag
+}
+
+# Tag Input Types
+input AddTagInput {
+    clientMutationId: String
+    displayTitle: String
+    heroMediaUrl: String
+    isVisible: Boolean!
+    metafields: [MetafieldInput]
+    name: String!
+    shopId: ID!
+    slug: String
+}
+
+type AddTagPayload {
+    clientMutationId: String
+    shopId: ID!
+    tag: Tag!
+}
+
+input UpdateTagInput {
+    clientMutationId: String
+    id: ID!
+    displayTitle: String
+    featuredProductIds: [ID]
+    heroMediaUrl: String
+    isVisible: Boolean!
+    metafields: [MetafieldInput]
+    name: String!
+    shopId: ID!
+    slug: String
+}
+
+type UpdateTagPayload {
+    clientMutationId: String
+    tag: Tag!
+}
+
 # Enums
 enum SortOrder {
     asc
     desc
+}
+
+enum TagSortByField {
+    _id
+    createdAt
+    name
+    position
+    updatedAt
 }
